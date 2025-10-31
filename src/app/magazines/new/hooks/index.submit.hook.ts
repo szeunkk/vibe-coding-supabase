@@ -32,7 +32,7 @@ export const useSubmitMagazine = () => {
         const filePath = `${year}/${month}/${day}/${uuid}.jpg`;
 
         // 1-4. Supabase Storage에 이미지 업로드
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("vibe-coding-storage")
           .upload(filePath, data.imageFile, {
             cacheControl: "3600",
