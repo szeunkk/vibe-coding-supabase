@@ -9,19 +9,6 @@ interface WebhookRequest {
   status: "Paid" | "Cancelled";
 }
 
-// 포트원 결제 정보 타입
-interface PortOnePaymentInfo {
-  paymentId: string;
-  amount: {
-    total: number;
-  };
-  billingKey?: string;
-  orderName: string;
-  customer: {
-    id: string;
-  };
-}
-
 export async function POST(request: NextRequest) {
   try {
     // 1. 요청 데이터 파싱
@@ -53,8 +40,8 @@ export async function POST(request: NextRequest) {
       throw new Error(`포트원 결제 정보 조회 실패: ${paymentResponse.status}`);
     }
 
-    const paymentInfo: PortOnePaymentInfo = await paymentResponse.json();
-    console.log("✅ 결제 정보 조회 완료:", paymentInfo);
+    const paymentInfo: Record<string, unknown> = await paymentResponse.json();
+    console.log("✅ 결제 정보 조회 완료:", JSON.stringify(paymentInfo, null, 2));
 
     // 3. 날짜 계산
     const now = new Date();
@@ -86,9 +73,20 @@ export async function POST(request: NextRequest) {
 
     // 2-2. Supabase payment 테이블에 저장
     console.log("💾 Supabase에 결제 정보 저장 중...");
+    
+    // paymentId는 포트원 API 응답에서 id 또는 paymentId로 올 수 있음
+    const transactionKey = (paymentInfo.id as string) || (paymentInfo.paymentId as string) || payment_id;
+    const amountData = paymentInfo.amount as { total?: number } | number | undefined;
+    const amount = typeof amountData === 'object' ? (amountData?.total || 0) : (amountData || 0);
+    
+    console.log("💰 저장할 데이터:", {
+      transaction_key: transactionKey,
+      amount,
+    });
+    
     const { error: paymentError } = await supabase.from("payment").insert({
-      transaction_key: paymentInfo.paymentId,
-      amount: paymentInfo.amount.total,
+      transaction_key: transactionKey,
+      amount: amount,
       status: "Paid",
       start_at: startAt,
       end_at: endAt.toISOString(),
@@ -106,40 +104,50 @@ export async function POST(request: NextRequest) {
 
     // 3-1. 포트원에 다음달 구독결제 예약
     console.log("📆 다음 달 구독 결제 예약 중...");
-    const scheduleResponse = await fetch(
-      `https://api.portone.io/payments/${nextScheduleId}/schedule`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `PortOne ${PORTONE_API_SECRET}`,
-        },
-        body: JSON.stringify({
-          payment: {
-            billingKey: paymentInfo.billingKey,
-            orderName: paymentInfo.orderName,
-            customer: {
-              id: paymentInfo.customer.id,
-            },
-            amount: {
-              total: paymentInfo.amount.total,
-            },
-            currency: "KRW",
+    
+    const billingKey = (paymentInfo.billingKey as string) || (paymentInfo.billing_key as string);
+    const orderName = (paymentInfo.orderName as string) || (paymentInfo.order_name as string) || "구독 결제";
+    const customerData = paymentInfo.customer as { id?: string } | undefined;
+    const customerId = customerData?.id || (paymentInfo.customerId as string) || "unknown";
+    
+    if (!billingKey) {
+      console.warn("⚠️ billingKey가 없어 구독 예약을 건너뜁니다.");
+    } else {
+      const scheduleResponse = await fetch(
+        `https://api.portone.io/payments/${nextScheduleId}/schedule`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `PortOne ${PORTONE_API_SECRET}`,
           },
-          timeToPay: nextScheduleAt.toISOString(),
-        }),
-      }
-    );
-
-    if (!scheduleResponse.ok) {
-      const errorText = await scheduleResponse.text();
-      console.error("❌ 구독 예약 실패:", errorText);
-      throw new Error(
-        `구독 예약 실패: ${scheduleResponse.status} - ${errorText}`
+          body: JSON.stringify({
+            payment: {
+              billingKey: billingKey,
+              orderName: orderName,
+              customer: {
+                id: customerId,
+              },
+              amount: {
+                total: amount,
+              },
+              currency: "KRW",
+            },
+            timeToPay: nextScheduleAt.toISOString(),
+          }),
+        }
       );
-    }
 
-    console.log("✅ 다음 달 구독 결제 예약 완료");
+      if (!scheduleResponse.ok) {
+        const errorText = await scheduleResponse.text();
+        console.error("❌ 구독 예약 실패:", errorText);
+        throw new Error(
+          `구독 예약 실패: ${scheduleResponse.status} - ${errorText}`
+        );
+      }
+
+      console.log("✅ 다음 달 구독 결제 예약 완료");
+    }
 
     // 체크리스트 반환
     const checklist = {
@@ -147,11 +155,11 @@ export async function POST(request: NextRequest) {
       details: {
         "1. 포트원 결제 정보 조회": "✅ 완료",
         "2. Supabase payment 테이블 저장": "✅ 완료",
-        "3. 다음 달 구독 결제 예약": "✅ 완료",
+        "3. 다음 달 구독 결제 예약": billingKey ? "✅ 완료" : "⚠️ 건너뜀 (빌링키 없음)",
         paymentInfo: {
-          paymentId: paymentInfo.paymentId,
-          amount: paymentInfo.amount.total,
-          billingKey: paymentInfo.billingKey,
+          transactionKey,
+          amount,
+          billingKey: billingKey || null,
         },
         schedule: {
           nextScheduleId,
