@@ -41,7 +41,10 @@ export async function POST(request: NextRequest) {
     }
 
     const paymentInfo: Record<string, unknown> = await paymentResponse.json();
-    console.log("✅ 결제 정보 조회 완료:", JSON.stringify(paymentInfo, null, 2));
+    console.log(
+      "✅ 결제 정보 조회 완료:",
+      JSON.stringify(paymentInfo, null, 2)
+    );
 
     // 3. 날짜 계산
     const now = new Date();
@@ -73,17 +76,34 @@ export async function POST(request: NextRequest) {
 
     // 2-2. Supabase payment 테이블에 저장
     console.log("💾 Supabase에 결제 정보 저장 중...");
-    
+
     // paymentId는 포트원 API 응답에서 id 또는 paymentId로 올 수 있음
-    const transactionKey = (paymentInfo.id as string) || (paymentInfo.paymentId as string) || payment_id;
-    const amountData = paymentInfo.amount as { total?: number } | number | undefined;
-    const amount = typeof amountData === 'object' ? (amountData?.total || 0) : (amountData || 0);
-    
+    const transactionKey =
+      (paymentInfo.id as string) ||
+      (paymentInfo.paymentId as string) ||
+      payment_id;
+    const amountData = paymentInfo.amount as
+      | { total?: number }
+      | number
+      | undefined;
+    const amount =
+      typeof amountData === "object" ? amountData?.total || 0 : amountData || 0;
+
     console.log("💰 저장할 데이터:", {
       transaction_key: transactionKey,
       amount,
+      "paymentInfo.id": paymentInfo.id,
+      "paymentInfo.paymentId": paymentInfo.paymentId,
+      payment_id,
     });
-    
+
+    // transaction_key가 없으면 에러
+    if (!transactionKey) {
+      throw new Error(
+        "transaction_key를 찾을 수 없습니다. 포트원 응답 구조를 확인하세요."
+      );
+    }
+
     const { error: paymentError } = await supabase.from("payment").insert({
       transaction_key: transactionKey,
       amount: amount,
@@ -104,12 +124,17 @@ export async function POST(request: NextRequest) {
 
     // 3-1. 포트원에 다음달 구독결제 예약
     console.log("📆 다음 달 구독 결제 예약 중...");
-    
-    const billingKey = (paymentInfo.billingKey as string) || (paymentInfo.billing_key as string);
-    const orderName = (paymentInfo.orderName as string) || (paymentInfo.order_name as string) || "구독 결제";
+
+    const billingKey =
+      (paymentInfo.billingKey as string) || (paymentInfo.billing_key as string);
+    const orderName =
+      (paymentInfo.orderName as string) ||
+      (paymentInfo.order_name as string) ||
+      "구독 결제";
     const customerData = paymentInfo.customer as { id?: string } | undefined;
-    const customerId = customerData?.id || (paymentInfo.customerId as string) || "unknown";
-    
+    const customerId =
+      customerData?.id || (paymentInfo.customerId as string) || "unknown";
+
     if (!billingKey) {
       console.warn("⚠️ billingKey가 없어 구독 예약을 건너뜁니다.");
     } else {
@@ -155,7 +180,9 @@ export async function POST(request: NextRequest) {
       details: {
         "1. 포트원 결제 정보 조회": "✅ 완료",
         "2. Supabase payment 테이블 저장": "✅ 완료",
-        "3. 다음 달 구독 결제 예약": billingKey ? "✅ 완료" : "⚠️ 건너뜀 (빌링키 없음)",
+        "3. 다음 달 구독 결제 예약": billingKey
+          ? "✅ 완료"
+          : "⚠️ 건너뜀 (빌링키 없음)",
         paymentInfo: {
           transactionKey,
           amount,
