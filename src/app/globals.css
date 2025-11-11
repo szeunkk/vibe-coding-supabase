@@ -1936,3 +1936,390 @@ body {
     color: #d1d1d1;
   }
 }
+
+/* Mypage Styles */
+.mypage-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  min-height: 100vh;
+}
+
+.mypage-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 2rem;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.mypage-back-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.mypage-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.mypage-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.mypage-header-desc {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.mypage-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Profile Card */
+.mypage-profile-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.mypage-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 1.25rem;
+  border: 4px solid #f3f4f6;
+}
+
+.mypage-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.mypage-bio-text {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.mypage-join-date {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+/* Subscription Card */
+.mypage-subscription-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.mypage-subscription-card.active {
+  background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+}
+
+.mypage-subscription-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.mypage-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.mypage-subscription-card.active .mypage-card-title {
+  color: #065f46;
+}
+
+.mypage-badge-active {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  background: rgba(5, 150, 105, 0.9);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.mypage-subscription-active {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mypage-plan-name {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 1rem;
+}
+
+.mypage-plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.mypage-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  color: #047857;
+  line-height: 1.5;
+}
+
+.mypage-feature-item svg {
+  flex-shrink: 0;
+  color: #059669;
+}
+
+.mypage-cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.mypage-cancel-btn:hover {
+  background: white;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+}
+
+.mypage-cancel-btn:active {
+  transform: translateY(0);
+}
+
+/* Unsubscribed State */
+.mypage-subscription-inactive {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mypage-unsubscribed-message {
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 1rem;
+}
+
+.mypage-plan-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.mypage-preview-item {
+  font-size: 0.9375rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.mypage-subscribe-btn {
+  padding: 1rem 2rem;
+  background: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mypage-subscribe-btn:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.mypage-subscribe-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mypage-wrapper {
+    padding: 1.5rem 1rem;
+  }
+
+  .mypage-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .mypage-profile-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .mypage-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .mypage-name {
+    font-size: 1.25rem;
+  }
+
+  .mypage-subscription-card {
+    padding: 1.5rem;
+  }
+
+  .mypage-plan-name {
+    font-size: 1.125rem;
+  }
+
+  .mypage-subscription-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .mypage-back-btn {
+    border-color: #333;
+    color: #d1d1d1;
+  }
+
+  .mypage-back-btn:hover {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  .mypage-header h1 {
+    color: #ededed;
+  }
+
+  .mypage-header-desc {
+    color: #9ca3af;
+  }
+
+  .mypage-profile-card {
+    background: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .mypage-avatar {
+    border-color: #333;
+  }
+
+  .mypage-name {
+    color: #ededed;
+  }
+
+  .mypage-bio-text {
+    color: #9ca3af;
+  }
+
+  .mypage-join-date {
+    background: #2a2a2a;
+    color: #9ca3af;
+  }
+
+  .mypage-subscription-card {
+    background: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .mypage-subscription-card.active {
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+  }
+
+  .mypage-card-title {
+    color: #ededed;
+  }
+
+  .mypage-subscription-card.active .mypage-card-title {
+    color: #a7f3d0;
+  }
+
+  .mypage-plan-name {
+    color: #a7f3d0;
+  }
+
+  .mypage-feature-item {
+    color: #6ee7b7;
+  }
+
+  .mypage-feature-item svg {
+    color: #a7f3d0;
+  }
+
+  .mypage-cancel-btn {
+    background: rgba(10, 10, 10, 0.8);
+    color: #a7f3d0;
+    border-color: rgba(167, 243, 208, 0.3);
+  }
+
+  .mypage-cancel-btn:hover {
+    background: #0a0a0a;
+    border-color: #a7f3d0;
+    box-shadow: 0 2px 8px rgba(167, 243, 208, 0.2);
+  }
+
+  .mypage-unsubscribed-message {
+    color: #9ca3af;
+  }
+
+  .mypage-plan-preview {
+    background: #2a2a2a;
+  }
+
+  .mypage-preview-item {
+    color: #d1d1d1;
+  }
+
+  .mypage-subscribe-btn {
+    background: #10b981;
+    border-color: #10b981;
+  }
+
+  .mypage-subscribe-btn:hover {
+    background: #059669;
+    border-color: #059669;
+  }
+}
