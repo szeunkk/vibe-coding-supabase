@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useCancelSubscription } from "./hooks/index.payment.cancel.hook";
+import { usePaymentStatus } from "./hooks/index.payment.status.hook";
 
 interface UserProfile {
   profileImage: string;
@@ -20,50 +20,76 @@ const mockUserData: UserProfile = {
   bio: "최신 IT 트렌드와 개발 이야기를 공유합니다",
   subscriptionStatus: "subscribed",
   joinDate: "2024.03",
-  transactionKey: "payment_1762829440566_l89t4cxao2k", // 테스트용 거래 키
+  transactionKey: "payment_1762748366411_i87toyox6z", // 테스트용 거래 키
 };
 
 function GlossaryMagazinesMypage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile>(mockUserData);
-  const { cancelSubscription, isLoading } = useCancelSubscription();
+  const user = mockUserData;
+  const { cancelSubscription, isLoading: isCanceling } =
+    useCancelSubscription();
+
+  // 실제 결제 상태 조회 Hook 사용
+  // mock 데이터의 transactionKey가 있으면 해당 키로 조회, 없으면 전체 조회
+  const { isSubscribed, status, transactionKey, isLoading, error, refresh } =
+    usePaymentStatus(
+      user.transactionKey
+        ? { transactionKeys: [user.transactionKey] }
+        : undefined
+    );
 
   const handleBackToList = () => {
     router.push("/magazines");
   };
 
   const handleSubscriptionToggle = () => {
-    setUser((prev) => ({
-      ...prev,
-      subscriptionStatus:
-        prev.subscriptionStatus === "subscribed"
-          ? "unsubscribed"
-          : "subscribed",
-    }));
+    // 구독하기 버튼 클릭 시 결제 페이지로 이동
+    router.push("/payments");
   };
 
   const handleCancelSubscription = async () => {
     if (confirm("구독을 취소하시겠습니까?")) {
       // transactionKey가 없으면 에러 메시지
-      if (!user.transactionKey) {
+      if (!transactionKey) {
         alert("구독 정보가 없습니다.");
         return;
       }
 
       // Hook을 통해 API 호출
-      const result = await cancelSubscription(user.transactionKey);
+      const result = await cancelSubscription(transactionKey);
 
-      // 성공 시 로컬 상태도 업데이트 (실제로는 리다이렉트되므로 불필요할 수도 있음)
+      // 성공 시 결제 상태 새로고침
       if (result.success) {
-        setUser((prev) => ({
-          ...prev,
-          subscriptionStatus: "unsubscribed",
-        }));
+        refresh();
       }
     }
   };
 
-  const isSubscribed = user.subscriptionStatus === "subscribed";
+  // 로딩 중일 때 표시
+  if (isLoading) {
+    return (
+      <div className="mypage-wrapper">
+        <div className="mypage-header">
+          <h1>IT 매거진 구독</h1>
+          <p className="mypage-header-desc">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 발생 시 표시
+  if (error) {
+    return (
+      <div className="mypage-wrapper">
+        <div className="mypage-header">
+          <h1>IT 매거진 구독</h1>
+          <p className="mypage-header-desc" style={{ color: "red" }}>
+            오류: {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mypage-wrapper">
@@ -110,7 +136,10 @@ function GlossaryMagazinesMypage() {
           <div className="mypage-subscription-header">
             <h3 className="mypage-card-title">구독 플랜</h3>
             {isSubscribed && (
-              <span className="mypage-badge-active">구독중</span>
+              <span className="mypage-badge-active">{status}</span>
+            )}
+            {!isSubscribed && (
+              <span className="mypage-badge-free">{status}</span>
             )}
           </div>
 
@@ -158,9 +187,9 @@ function GlossaryMagazinesMypage() {
               <button
                 className="mypage-cancel-btn"
                 onClick={handleCancelSubscription}
-                disabled={isLoading}
+                disabled={isCanceling}
               >
-                {isLoading ? "취소 처리 중..." : "구독 취소"}
+                {isCanceling ? "취소 처리 중..." : "구독 취소"}
               </button>
             </div>
           ) : (
