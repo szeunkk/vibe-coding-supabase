@@ -15,23 +15,34 @@ export const useSubmitMagazine = () => {
 
   const submitMagazine = async (data: MagazineData) => {
     try {
+      // 1. 로그인된 사용자 정보 가져오기
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        alert("로그인이 필요합니다.");
+        return false;
+      }
+
       let imageUrl = "";
 
-      // 1. 이미지 파일이 있는 경우 Storage에 업로드
+      // 2. 이미지 파일이 있는 경우 Storage에 업로드
       if (data.imageFile) {
-        // 1-1. 날짜 기반 경로 생성 (yyyy/mm/dd)
+        // 2-1. 날짜 기반 경로 생성 (yyyy/mm/dd)
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
 
-        // 1-2. UUID 생성
+        // 2-2. UUID 생성
         const uuid = crypto.randomUUID();
 
-        // 1-3. 파일 확장자 추출 (jpg로 통일)
+        // 2-3. 파일 확장자 추출 (jpg로 통일)
         const filePath = `${year}/${month}/${day}/${uuid}.jpg`;
 
-        // 1-4. Supabase Storage에 이미지 업로드
+        // 2-4. Supabase Storage에 이미지 업로드
         const { error: uploadError } = await supabase.storage
           .from("vibe-coding-storage")
           .upload(filePath, data.imageFile, {
@@ -39,14 +50,14 @@ export const useSubmitMagazine = () => {
             upsert: false,
           });
 
-        // 1-5. 업로드 에러 체크
+        // 2-5. 업로드 에러 체크
         if (uploadError) {
           console.error("이미지 업로드 실패:", uploadError);
           alert(`이미지 업로드에 실패하였습니다: ${uploadError.message}`);
           return false;
         }
 
-        // 1-6. 업로드된 이미지의 Public URL 가져오기
+        // 2-6. 업로드된 이미지의 Public URL 가져오기
         const {
           data: { publicUrl },
         } = supabase.storage.from("vibe-coding-storage").getPublicUrl(filePath);
@@ -54,7 +65,7 @@ export const useSubmitMagazine = () => {
         imageUrl = publicUrl;
       }
 
-      // 2. Supabase에 magazine 데이터 등록
+      // 3. Supabase에 magazine 데이터 등록
       const { data: insertedData, error } = await supabase
         .from("magazine")
         .insert([
@@ -65,24 +76,25 @@ export const useSubmitMagazine = () => {
             description: data.description,
             content: data.content,
             tags: data.tags,
+            user_id: user.id, // 로그인된 사용자 ID
           },
         ])
         .select()
         .single();
 
-      // 3. 에러 체크
+      // 4. 에러 체크
       if (error) {
         console.error("등록 실패:", error);
         alert(`등록에 실패하였습니다: ${error.message}`);
         return false;
       }
 
-      // 4. 등록 성공 처리
+      // 5. 등록 성공 처리
       if (insertedData) {
-        // 4-1. 알림 메시지
+        // 5-1. 알림 메시지
         alert("등록에 성공하였습니다.");
 
-        // 4-2. 상세 페이지로 이동
+        // 5-2. 상세 페이지로 이동
         router.push(`/magazines/${insertedData.id}`);
         return true;
       }

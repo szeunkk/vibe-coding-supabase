@@ -3,46 +3,31 @@
 import { useRouter } from "next/navigation";
 import { useCancelSubscription } from "./hooks/index.payment.cancel.hook";
 import { usePaymentStatus } from "./hooks/index.payment.status.hook";
-
-interface UserProfile {
-  profileImage: string;
-  nickname: string;
-  bio: string;
-  subscriptionStatus: "subscribed" | "unsubscribed";
-  joinDate: string;
-  transactionKey?: string; // 구독 취소를 위한 거래 키
-}
-
-const mockUserData: UserProfile = {
-  profileImage:
-    "https://images.unsplash.com/photo-1613145997970-db84a7975fbb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9maWxlJTIwcG9ydHJhaXQlMjBwZXJzb258ZW58MXx8fHwxNzYyNTkxMjU5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-  nickname: "테크러버",
-  bio: "최신 IT 트렌드와 개발 이야기를 공유합니다",
-  subscriptionStatus: "subscribed",
-  joinDate: "2024.03",
-  transactionKey: "payment_1762748366411_i87toyox6z", // 테스트용 거래 키
-};
+import { useUserProfile } from "./hooks/index.profile.hook";
 
 function GlossaryMagazinesMypage() {
   const router = useRouter();
-  const user = mockUserData;
+  
+  // Supabase Auth에서 사용자 프로필 정보 가져오기
+  const { profile, isLoading: isProfileLoading, error: profileError } = useUserProfile();
+  
   const { cancelSubscription, isLoading: isCanceling } =
     useCancelSubscription();
 
-  // 실제 결제 상태 조회 Hook 사용
-  // mock 데이터의 transactionKey가 있으면 해당 키로 조회, 없으면 전체 조회
-  const { isSubscribed, status, transactionKey, isLoading, error, refresh } =
-    usePaymentStatus(
-      user.transactionKey
-        ? { transactionKeys: [user.transactionKey] }
-        : undefined
-    );
+  // 실제 결제 상태 조회 Hook 사용 (로그인된 사용자의 userId로 필터링)
+  const { isSubscribed, status, transactionKey, isLoading: isPaymentLoading, error: paymentError, refresh } =
+    usePaymentStatus({ userId: profile?.userId });
 
   const handleBackToList = () => {
     router.push("/magazines");
   };
 
   const handleSubscriptionToggle = () => {
+    // 로그인하지 않은 경우 로그인 페이지로 이동
+    if (!profile) {
+      router.push("/auth/login");
+      return;
+    }
     // 구독하기 버튼 클릭 시 결제 페이지로 이동
     router.push("/payments");
   };
@@ -66,7 +51,7 @@ function GlossaryMagazinesMypage() {
   };
 
   // 로딩 중일 때 표시
-  if (isLoading) {
+  if (isProfileLoading || isPaymentLoading) {
     return (
       <div className="mypage-wrapper">
         <div className="mypage-header">
@@ -78,15 +63,34 @@ function GlossaryMagazinesMypage() {
   }
 
   // 에러 발생 시 표시
-  if (error) {
+  if (profileError || paymentError) {
     return (
       <div className="mypage-wrapper">
         <div className="mypage-header">
           <h1>IT 매거진 구독</h1>
           <p className="mypage-header-desc" style={{ color: "red" }}>
-            오류: {error}
+            오류: {profileError || paymentError}
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // 로그인하지 않은 경우
+  if (!profile) {
+    return (
+      <div className="mypage-wrapper">
+        <div className="mypage-header">
+          <h1>IT 매거진 구독</h1>
+          <p className="mypage-header-desc">로그인이 필요합니다.</p>
+        </div>
+        <button 
+          className="mypage-subscribe-btn"
+          onClick={() => router.push("/auth/login")}
+          style={{ maxWidth: "300px", margin: "20px auto" }}
+        >
+          로그인하기
+        </button>
       </div>
     );
   }
@@ -119,14 +123,38 @@ function GlossaryMagazinesMypage() {
       <div className="mypage-grid">
         {/* 프로필 카드 */}
         <div className="mypage-profile-card">
-          <img
-            src={user.profileImage}
-            alt={user.nickname}
-            className="mypage-avatar"
-          />
-          <h2 className="mypage-name">{user.nickname}</h2>
-          <p className="mypage-bio-text">{user.bio}</p>
-          <div className="mypage-join-date">가입일 {user.joinDate}</div>
+          {profile.profileImage ? (
+            <img
+              src={profile.profileImage}
+              alt={profile.name}
+              className="mypage-avatar"
+            />
+          ) : (
+            // 프로필 사진이 없는 경우 기본 아바타 아이콘 표시
+            <div className="mypage-avatar" style={{ 
+              backgroundColor: '#e5e7eb', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+              <svg 
+                width="64" 
+                height="64" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="#9ca3af" 
+                strokeWidth="1.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          )}
+          <h2 className="mypage-name">{profile.name}</h2>
+          <p className="mypage-bio-text">{profile.email}</p>
+          <div className="mypage-join-date">가입일 {profile.joinDate}</div>
         </div>
 
         {/* 구독 플랜 카드 */}

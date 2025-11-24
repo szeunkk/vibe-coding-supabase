@@ -2,6 +2,7 @@
 
 import * as PortOne from "@portone/browser-sdk/v2";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 /**
  * 포트원 v2 빌링키 발급 및 구독 결제 Hook
@@ -14,6 +15,30 @@ export const usePayment = () => {
    */
   const handleSubscribe = async () => {
     try {
+      // 로그인된 사용자 정보 가져오기
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        alert("로그인이 필요합니다.");
+        router.push("/auth/login");
+        return;
+      }
+
+      // 세션 토큰 가져오기
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        alert("인증 세션이 만료되었습니다. 다시 로그인해주세요.");
+        router.push("/auth/login");
+        return;
+      }
+
       // 환경변수 체크
       const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID;
       const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY;
@@ -27,8 +52,8 @@ export const usePayment = () => {
         return;
       }
 
-      // 고객 ID 생성
-      const customerId = `customer_${Date.now()}`;
+      // 고객 ID는 로그인된 user_id 사용
+      const customerId = user.id;
 
       // 1-1) 포트원 빌링키 발급 화면 노출
       const issueResponse = await PortOne.requestIssueBillingKey({
@@ -41,9 +66,9 @@ export const usePayment = () => {
         issueName: "IT 매거진 월간 구독",
         customer: {
           customerId,
-          fullName: "고객",
-          email: "customer@example.com",
-          phoneNumber: "010-0000-0000",
+          fullName: user.user_metadata?.full_name || "고객",
+          email: user.email || "customer@example.com",
+          phoneNumber: user.user_metadata?.phone_number || "010-0000-0000",
         },
       });
 
@@ -66,14 +91,16 @@ export const usePayment = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`, // 인증토큰 추가
         },
         body: JSON.stringify({
           billingKey: issueResponse.billingKey,
           orderName: "IT 매거진 월간 구독",
           amount: 9900,
           customer: {
-            id: customerId,
+            id: customerId, // 로그인된 user_id
           },
+          customData: user.id, // 로그인된 user_id
         }),
       });
 

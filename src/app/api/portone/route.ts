@@ -105,6 +105,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // user_id 추출 (customData에서)
+      const userId = paymentInfo.customData as string | undefined;
+
       const { error: paymentError } = await supabase.from("payment").insert({
         transaction_key: transactionKey,
         amount: amount,
@@ -114,6 +117,7 @@ export async function POST(request: NextRequest) {
         end_grace_at: endGraceAt.toISOString(),
         next_schedule_at: nextScheduleAt.toISOString(),
         next_schedule_id: nextScheduleId,
+        user_id: userId,
       });
 
       if (paymentError) {
@@ -158,6 +162,7 @@ export async function POST(request: NextRequest) {
                 amount: {
                   total: amount,
                 },
+                customData: paymentInfo.customData,
                 currency: "KRW",
               },
               timeToPay: nextScheduleAt.toISOString(),
@@ -268,6 +273,7 @@ export async function POST(request: NextRequest) {
         end_grace_at: existingPayment.end_grace_at,
         next_schedule_at: existingPayment.next_schedule_at,
         next_schedule_id: existingPayment.next_schedule_id,
+        user_id: existingPayment.user_id,
       });
 
       if (cancelError) {

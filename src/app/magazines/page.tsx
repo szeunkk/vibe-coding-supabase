@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogIn, PenSquare, Sparkles } from "lucide-react";
+import { LogIn, LogOut, PenSquare, Sparkles, User } from "lucide-react";
 import { useMagazines } from "./index.binding.hook";
+import { useLoginStatus } from "./index.login.logout.status.hook";
 
 const getCategoryColor = (category: string) => {
   const colorMap: Record<string, string> = {
@@ -22,6 +23,7 @@ const getCategoryColor = (category: string) => {
 export default function GlossaryCards() {
   const router = useRouter();
   const { magazines, loading, error } = useMagazines();
+  const { user, loading: authLoading, isLoggedIn, handleLogout, goToMyPage, goToLogin } = useLoginStatus();
 
   // 카드 클릭 시 상세페이지로 이동
   const handleCardClick = (id: string) => {
@@ -68,13 +70,55 @@ export default function GlossaryCards() {
           최신 기술 트렌드와 인사이트를 전합니다
         </p>
         <div className="magazine-header-actions">
-          <button
-            className="magazine-header-button magazine-header-button-ghost"
-            onClick={() => router.push("/auth/login")}
-          >
-            <LogIn className="magazine-button-icon" />
-            <span className="magazine-button-text">로그인</span>
-          </button>
+          {isLoggedIn ? (
+            // 로그인 상태: 프로필 사진, 이름, 로그아웃 버튼 표시
+            <>
+              <div className="flex items-center gap-3">
+                {/* 프로필 사진 - 클릭 시 마이페이지로 이동 */}
+                <button
+                  onClick={goToMyPage}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  title="마이페이지로 이동"
+                >
+                  {user?.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                      <User className="w-6 h-6 text-gray-600" />
+                    </div>
+                  )}
+                  {/* 이름 - 클릭 시 마이페이지로 이동 */}
+                  <span className="font-medium text-gray-700 hover:text-gray-900">
+                    {user?.name}
+                  </span>
+                </button>
+              </div>
+
+              {/* 로그아웃 버튼 */}
+              <button
+                className="magazine-header-button magazine-header-button-ghost"
+                onClick={handleLogout}
+              >
+                <LogOut className="magazine-button-icon" />
+                <span className="magazine-button-text">로그아웃</span>
+              </button>
+            </>
+          ) : (
+            // 비로그인 상태: 로그인 버튼 표시
+            <button
+              className="magazine-header-button magazine-header-button-ghost"
+              onClick={goToLogin}
+            >
+              <LogIn className="magazine-button-icon" />
+              <span className="magazine-button-text">로그인</span>
+            </button>
+          )}
+
+          {/* 공통 버튼들 */}
           <button
             className="magazine-header-button magazine-header-button-primary"
             onClick={() => router.push("/magazines/new")}
