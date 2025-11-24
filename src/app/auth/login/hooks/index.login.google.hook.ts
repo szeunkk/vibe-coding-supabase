@@ -8,7 +8,7 @@ export const useGoogleLogin = () => {
   const handleGoogleLogin = async () => {
     try {
       // Supabase 구글 OAuth 로그인 호출
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/login/success`,

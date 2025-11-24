@@ -14,7 +14,7 @@ export async function createServerSupabaseClient() {
     auth: {
       storage: {
         getItem: async (key: string) => {
-          return cookieStore.get(key)?.value;
+          return cookieStore.get(key)?.value ?? null;
         },
         setItem: async (key: string, value: string) => {
           cookieStore.set(key, value);

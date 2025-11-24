@@ -23,7 +23,7 @@ const getCategoryColor = (category: string) => {
 export default function GlossaryCards() {
   const router = useRouter();
   const { magazines, loading, error } = useMagazines();
-  const { user, loading: authLoading, isLoggedIn, handleLogout, goToMyPage, goToLogin } = useLoginStatus();
+  const { user, isLoggedIn, handleLogout, goToMyPage, goToLogin } = useLoginStatus();
 
   // 카드 클릭 시 상세페이지로 이동
   const handleCardClick = (id: string) => {
