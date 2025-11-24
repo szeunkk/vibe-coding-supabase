@@ -30,8 +30,8 @@ export const useMagazines = () => {
           throw fetchError;
         }
 
-        // 조회된 image_url을 썸네일 URL로 변환
-        const magazinesWithThumbnails = (data || []).map((magazine) => {
+        // 조회된 image_url을 Public URL로 변환
+        const magazinesWithPublicUrl = (data || []).map((magazine) => {
           // image_url이 없거나 null인 경우 원본 그대로 반환
           if (!magazine.image_url) {
             return magazine;
@@ -52,23 +52,18 @@ export const useMagazines = () => {
             }
           }
 
-          // Supabase Image Transformation을 사용하여 썸네일 생성
-          const { data: thumbnailData } = supabase.storage
+          // 기본 Public URL 사용
+          const { data: publicData } = supabase.storage
             .from("vibe-coding-storage")
-            .getPublicUrl(imagePath, {
-              transform: {
-                width: 323,
-                resize: "contain",
-              },
-            });
+            .getPublicUrl(imagePath);
 
           return {
             ...magazine,
-            image_url: thumbnailData.publicUrl,
+            image_url: publicData.publicUrl,
           };
         });
 
-        setMagazines(magazinesWithThumbnails);
+        setMagazines(magazinesWithPublicUrl);
         setError(null);
       } catch (err) {
         console.error("Magazine 조회 오류:", err);

@@ -39,9 +39,8 @@ export const useMagazineDetail = (id: string) => {
           throw new Error("매거진을 찾을 수 없습니다.");
         }
 
-        // 썸네일 URL 생성 (Supabase Image Transformation 사용)
-        // image_url이 스토리지 경로인 경우 썸네일 URL로 변환
-        let thumbnailUrl = data.image_url;
+        // Public URL 생성 (이미지 변환 없이)
+        let imageUrl = data.image_url;
 
         if (data.image_url && typeof data.image_url === "string") {
           try {
@@ -60,32 +59,24 @@ export const useMagazineDetail = (id: string) => {
             }
 
             if (storagePath && storagePath.trim() !== "") {
-              // getPublicUrl을 사용하여 썸네일 URL 생성
+              // 기본 Public URL 사용
               const { data: urlData } = supabase.storage
                 .from("vibe-coding-storage")
-                .getPublicUrl(storagePath, {
-                  transform: {
-                    width: 852,
-                    resize: "contain",
-                  },
-                });
+                .getPublicUrl(storagePath);
 
               if (urlData?.publicUrl) {
-                thumbnailUrl = urlData.publicUrl;
+                imageUrl = urlData.publicUrl;
               }
             }
-          } catch (transformError) {
-            console.warn(
-              "썸네일 URL 생성 실패, 원본 URL 사용:",
-              transformError
-            );
+          } catch (urlError) {
+            console.warn("이미지 URL 생성 실패, 원본 URL 사용:", urlError);
             // 오류 발생 시 원본 URL 사용
           }
         }
 
         setMagazine({
           ...data,
-          image_url: thumbnailUrl,
+          image_url: imageUrl,
         });
       } catch (err) {
         console.error("매거진 조회 에러:", err);
