@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { LogIn, LogOut, PenSquare, Sparkles, User } from "lucide-react";
 import { useMagazines } from "./index.binding.hook";
 import { useLoginStatus } from "./index.login.logout.status.hook";
+import { useAuthGuard } from "./index.guard.auth.hook";
+import { useSubscribeGuard } from "./index.guard.subscribe.hook";
 
 const getCategoryColor = (category: string) => {
   const colorMap: Record<string, string> = {
@@ -24,10 +26,21 @@ export default function GlossaryCards() {
   const router = useRouter();
   const { magazines, loading, error } = useMagazines();
   const { user, isLoggedIn, handleLogout, goToMyPage, goToLogin } = useLoginStatus();
+  const { checkAuth } = useAuthGuard();
+  const { checkSubscription } = useSubscribeGuard();
 
-  // 카드 클릭 시 상세페이지로 이동
+  // 카드 클릭 시 상세페이지로 이동 (구독 GUARD 적용)
   const handleCardClick = (id: string) => {
-    router.push(`/magazines/${id}`);
+    checkSubscription(() => {
+      router.push(`/magazines/${id}`);
+    });
+  };
+
+  // 구독하기 버튼 클릭 핸들러 (로그인 GUARD 적용)
+  const handleSubscribeClick = () => {
+    checkAuth(() => {
+      router.push("/payments");
+    });
   };
 
   if (loading) {
@@ -121,14 +134,14 @@ export default function GlossaryCards() {
           {/* 공통 버튼들 */}
           <button
             className="magazine-header-button magazine-header-button-primary"
-            onClick={() => router.push("/magazines/new")}
+            onClick={() => checkSubscription(() => router.push("/magazines/new"))}
           >
             <PenSquare className="magazine-button-icon" />
             <span className="magazine-button-text">글쓰기</span>
           </button>
           <button
             className="magazine-header-button magazine-header-button-payment"
-            onClick={() => router.push("/payments")}
+            onClick={handleSubscribeClick}
           >
             <Sparkles className="magazine-button-icon" />
             <span className="magazine-button-text">구독하기</span>
